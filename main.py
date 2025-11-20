@@ -103,6 +103,39 @@ def bisection(
             - Liczba wykonanych iteracji.
         Jeżeli dane wejściowe są niepoprawne funkcja zwraca `None`.
     """
+    if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
+        return None
+    if not isinstance(f, Callable[[float], float]) or not isinstance(epsilon, float):
+        return None
+    if not isinstance(max_iter, float):
+        return None
+    
+    if func(a) == 0:
+        return (a, 0)
+    if func(b) == 0:
+        return (b, 0)
+
+    iter = 0
+    i = 2
+    while func(a) * func(b) < 0:
+        if iter >= max_iter:
+            break
+        
+        c = (a + b) / i
+        if abs(c - a) < abs(c - b):
+            if func(a) * func(c) >= 0:
+                break
+            else:
+                b = c
+        else:
+            if func(b) * func(c) >= 0:
+                break
+            else:
+                a = c
+        i *=2
+        iter += 1
+
+    return (c, iter)
     pass
 
 
@@ -130,6 +163,26 @@ def secant(
             - Liczba wykonanych iteracji.
         Jeżeli dane wejściowe są niepoprawne funkcja zwraca `None`.
     """
+    if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
+        return None
+    if not isinstance(f, Callable[[float], float]):
+        return None
+    if not isinstance(epsilon, float) or not isinstance(max_iters, (int)):
+        return None
+    
+    if func(a) == 0:
+        return (a, 0)
+    if func(b) == 0:
+        return (b, 0)
+    
+    iter = 0
+    for _ in range(max_iters):
+        c = (a*func(b) - b*func(a)) / (func(b) - func(a))
+        if func(c) == 0:
+            break
+    
+        iter += 1
+    return (c, iter)
     pass
 
 
