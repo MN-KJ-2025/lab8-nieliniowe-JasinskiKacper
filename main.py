@@ -105,34 +105,36 @@ def bisection(
     """
     if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
         return None
-    if not isinstance(f, Callable[[float], float]) or not isinstance(epsilon, float):
+    if not callable(f) or not isinstance(epsilon, float):
         return None
-    if not isinstance(max_iter, float):
+    if not isinstance(max_iter, int):
         return None
     
-    if func(a) == 0:
+    fa = f(a)
+    fb = f(b)
+
+    if abs(fa) < epsilon:
         return (a, 0)
-    if func(b) == 0:
+    if abs(fb) < epsilon:
         return (b, 0)
+    if fa * fb > 0:
+        return None
 
     iter = 0
-    i = 2
-    while func(a) * func(b) < 0:
-        if iter >= max_iter:
-            break
+    while iter < max_iter:
+        c = (a + b) / 2
+
+        fc = f(c)
+        if abs(fc) < epsilon:
+            return (c, iter + 1)
         
-        c = (a + b) / i
-        if abs(c - a) < abs(c - b):
-            if func(a) * func(c) >= 0:
-                break
-            else:
-                b = c
+        if fa * fc < 0:
+            b = c
+            fb = fc
         else:
-            if func(b) * func(c) >= 0:
-                break
-            else:
-                a = c
-        i *=2
+            a = c
+            fa = fc
+        
         iter += 1
 
     return (c, iter)
@@ -165,25 +167,34 @@ def secant(
     """
     if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
         return None
-    if not isinstance(f, Callable[[float], float]):
+    if not callable(f):
         return None
     if not isinstance(epsilon, float) or not isinstance(max_iters, (int)):
         return None
     
-    if func(a) == 0:
-        return (a, 0)
-    if func(b) == 0:
-        return (b, 0)
+    x0 = a
+    x1 = b
+    fx0 = f(x0)
+    fx1 = f(x1)
+
+    if abs(fx0) < epsilon:
+        return (x0, 0)
+    if abs(fx1) < epsilon:
+        return (x1, 0)
     
-    iter = 0
-    for _ in range(max_iters):
-        c = (a*func(b) - b*func(a)) / (func(b) - func(a))
-        if func(c) == 0:
-            break
-    
-        iter += 1
-    return (c, iter)
-    pass
+    for iter in range(1, max_iters + 1):
+        if fx1 - fx0 == 0:
+            return None
+        x2 = (x0 * fx1 - x1 * fx0) / (fx1 - fx0)
+        fx2 = f(x2)
+
+        if abs(x2 - x1) < epsilon or abs(fx2) <= epsilon:
+            return (x2, iter)
+        
+        x0, x1 = x1, x2
+        fx0, fx1 = fx1, fx2
+
+    return (x2, max_iters)
 
 
 def difference_quotient(
@@ -203,6 +214,12 @@ def difference_quotient(
         (float): Wartość ilorazu różnicowego.
         Jeżeli dane wejściowe są niepoprawne funkcja zwraca `None`.
     """
+    if not callable(f) or not isinstance(x, (int, float)) or not isinstance(h, (int, float)):
+        return None
+    if h == 0:
+        return None
+    
+    return (f(x + h) - f(x) )/ h
     pass
 
 
@@ -235,4 +252,36 @@ def newton(
             - Liczba wykonanych iteracji.
         Jeżeli dane wejściowe są niepoprawne funkcja zwraca `None`.
     """
+    if not callable(f) or not callable(df) or not callable(ddf):
+        return None
+    if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
+        return None
+    if not isinstance(epsilon, float) or not isinstance(max_iter, int):
+        return None
+    
+    if f(a) * f(b) > 0:
+        return None
+    if f(a) == 0:
+        return (a, 0)
+    if f(b) == 0:
+        return (b, 0)
+
+    if f(a) * ddf(a) > 0:
+        x0 = a
+    elif f(b) * ddf(b) > 0:
+        x0 = b
+    else:
+        return None
+
+    for it in range(1, max_iter + 1):
+        if df(x0) == 0:
+            return None
+        
+        x1 = x0 - f(x0) / df(x0)
+
+        if abs(x1 - x0) < epsilon or abs(f(x1)) < epsilon:
+            return (x1, it)
+        
+        x0 = x1
+    return (x1, max_iter)
     pass
