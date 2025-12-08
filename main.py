@@ -172,29 +172,28 @@ def secant(
     if not isinstance(epsilon, float) or not isinstance(max_iters, (int)):
         return None
     
-    x0 = a
-    x1 = b
-    fx0 = f(x0)
-    fx1 = f(x1)
-
-    if abs(fx0) < epsilon:
-        return (x0, 0)
-    if abs(fx1) < epsilon:
-        return (x1, 0)
+    fa = f(a)
+    fb = f(b)
+    if fa * fb >= 0:
+        return None
     
-    for iter in range(1, max_iters + 1):
-        if fx1 - fx0 == 0:
-            return None
-        x2 = (x0 * fx1 - x1 * fx0) / (fx1 - fx0)
-        fx2 = f(x2)
+    c = (a * fb - b * fa ) / (fb - fa)
+    fc = f(c)
+    iter = 1
 
-        if abs(x2 - x1) < epsilon or abs(fx2) <= epsilon:
-            return (x2, iter)
+    while iter < max_iters and abs(fc) >= epsilon:
+        if fa * fc < 0:
+            b = c
+            fb = fc
+        else:
+            a = c
+            fa = fc
         
-        x0, x1 = x1, x2
-        fx0, fx1 = fx1, fx2
+        c = (a * fb - b * fa ) / (fb - fa)
+        fc = f(c)
+        iter += 1
 
-    return (x2, max_iters)
+    return (c, iter)
 
 
 def difference_quotient(
